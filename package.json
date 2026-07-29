@@ -5,8 +5,11 @@
   "dependencies": {
     "@expo/ui": "~57.0.7",
     "@gorhom/bottom-sheet": "^5.2.14",
+    "@react-native-community/netinfo": "^11.5.2",
     "@shopify/flash-list": "^1.7.6",
+    "@tanstack/query-sync-storage-persister": "^5.101.4",
     "@tanstack/react-query": "^5.101.4",
+    "@tanstack/react-query-persist-client": "^5.101.4",
     "axios": "^1.18.1",
     "date-fns": "^4.4.0",
     "expo": "~57.0.8",
@@ -27,7 +30,7 @@
     "react-dom": "19.2.3",
     "react-native": "0.86.0",
     "react-native-gesture-handler": "~2.32.0",
-    "react-native-mmkv": "^3.3.3",
+    "react-native-mmkv": "^2.12.2",
     "react-native-reanimated": "4.5.0",
     "react-native-safe-area-context": "~5.7.0",
     "react-native-screens": "~4.26.0",
@@ -41,10 +44,12 @@
   "scripts": {
     "start": "expo start",
     "reset-project": "node ./scripts/reset-project.js",
-    "android": "expo start --android",
-    "ios": "expo start --ios",
+    "android": "expo run:android",
+    "ios": "expo run:ios",
     "web": "expo start --web",
-    "lint": "expo lint"
+    "lint": "expo lint",
+    "build:ios": "expo run:ios",
+    "build:android": "expo run:android"
   },
   "private": true
 }

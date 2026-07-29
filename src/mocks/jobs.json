@@ -1,0 +1,62 @@
+{
+  "items": [
+    {
+      "id": "mock-job-1",
+      "trackingNumber": "TRK-1001",
+      "pickupAddress": "450 Townsend St, San Francisco, CA",
+      "deliveryAddress": "1 Ferry Building, San Francisco, CA",
+      "status": "PENDING",
+      "priority": "HIGH",
+      "driverId": "mock-driver-1",
+      "createdAt": "2026-07-29T08:00:00.000Z",
+      "updatedAt": "2026-07-29T08:00:00.000Z"
+    },
+    {
+      "id": "mock-job-2",
+      "trackingNumber": "TRK-1002",
+      "pickupAddress": "1 Market St, San Francisco, CA",
+      "deliveryAddress": "555 California St, San Francisco, CA",
+      "status": "IN_TRANSIT",
+      "priority": "MEDIUM",
+      "driverId": "mock-driver-1",
+      "createdAt": "2026-07-29T07:30:00.000Z",
+      "updatedAt": "2026-07-29T09:10:00.000Z"
+    },
+    {
+      "id": "mock-job-3",
+      "trackingNumber": "TRK-1003",
+      "pickupAddress": "2 Marina Blvd, San Francisco, CA",
+      "deliveryAddress": "3810 Judah St, San Francisco, CA",
+      "status": "DELIVERED",
+      "priority": "LOW",
+      "driverId": "mock-driver-1",
+      "createdAt": "2026-07-28T15:00:00.000Z",
+      "updatedAt": "2026-07-28T17:45:00.000Z"
+    },
+    {
+      "id": "mock-job-4",
+      "trackingNumber": "TRK-1004",
+      "pickupAddress": "899 Valencia St, San Francisco, CA",
+      "deliveryAddress": "1200 3rd St, San Francisco, CA",
+      "status": "PENDING",
+      "priority": "HIGH",
+      "driverId": "mock-driver-1",
+      "createdAt": "2026-07-29T08:45:00.000Z",
+      "updatedAt": "2026-07-29T08:45:00.000Z"
+    },
+    {
+      "id": "mock-job-5",
+      "trackingNumber": "TRK-1005",
+      "pickupAddress": "701 Illinois St, San Francisco, CA",
+      "deliveryAddress": "88 Kearny St, San Francisco, CA",
+      "status": "CANCELLED",
+      "priority": "LOW",
+      "driverId": "mock-driver-1",
+      "createdAt": "2026-07-27T12:00:00.000Z",
+      "updatedAt": "2026-07-27T13:00:00.000Z"
+    }
+  ],
+  "total": 5,
+  "page": 1,
+  "limit": 20
+}
