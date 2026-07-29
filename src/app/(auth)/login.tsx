@@ -30,9 +30,15 @@ import { login } from '@/services/auth-service';
 
 const EMAIL_PATTERN = /^[^\s@]+@[^\s@]+\.[^\s@]+$/;
 
+// Pre-fills the demo driver seeded by server/scripts/seed-mobile-driver.js
+// (see server/docs/mobile UI/seed-credentials.md) — dev-only convenience,
+// never shipped in a production build.
+const DEV_DEFAULT_EMAIL = __DEV__ ? 'driver@opendispatch.test' : '';
+const DEV_DEFAULT_PASSWORD = __DEV__ ? 'DriverPass123!' : '';
+
 export default function LoginScreen() {
-  const [email, setEmail] = useState('');
-  const [password, setPassword] = useState('');
+  const [email, setEmail] = useState(DEV_DEFAULT_EMAIL);
+  const [password, setPassword] = useState(DEV_DEFAULT_PASSWORD);
   const [showPassword, setShowPassword] = useState(false);
   const [rememberDevice, setRememberDevice] = useState(true);
   const [fieldErrors, setFieldErrors] = useState<{ email?: string; password?: string }>({});
