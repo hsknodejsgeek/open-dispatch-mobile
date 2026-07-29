@@ -12,6 +12,24 @@ export interface LoginResponse {
   user: AuthUser;
 }
 
+export type DriverStatus = 'IDLE' | 'ON_TRIP';
+
+export interface DriverProfile {
+  id: string;
+  vehicleNo: string;
+  status: DriverStatus;
+  currentLat: number | null;
+  currentLng: number | null;
+}
+
+/** GET /v1/auth/me (Phase 4) response shape. */
+export interface MeResponse {
+  id: string;
+  email: string;
+  role: Role;
+  driver: DriverProfile | null;
+}
+
 export type DeliveryStatus = 'PENDING' | 'IN_TRANSIT' | 'DELIVERED' | 'CANCELLED';
 export type Priority = 'LOW' | 'MEDIUM' | 'HIGH';
 
@@ -31,12 +49,7 @@ export interface ListDeliveriesParams {
   status?: DeliveryStatus;
   page?: number;
   limit?: number;
-  /**
-   * TODO(Phase 4): not yet supported by GET /v1/deliveries on the server —
-   * the endpoint currently has no driverId filter. Sent as a query param
-   * once the server adds it; until then, filter client-side against the
-   * authenticated driver's id if needed.
-   */
+  /** Server-side filter, added in Phase 4 (GET /v1/deliveries?driverId=...). */
   driverId?: string;
 }
 

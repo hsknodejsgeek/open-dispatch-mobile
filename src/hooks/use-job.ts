@@ -6,10 +6,9 @@ import { getDelivery } from '@/services/deliveries-service';
 import type { Delivery, ListDeliveriesResponse } from '@/types/api';
 
 /**
- * Single job detail. GET /v1/deliveries/:id doesn't exist server-side yet
- * (Phase 4 adds it) — falls back to mock data (or a cached list item, if
- * present) so the job detail screen (Phase 7) has something to render
- * against today.
+ * Single job detail (GET /v1/deliveries/:id, added in Phase 4). Falls back
+ * to mock data (or a cached list item, if present) if the API call fails
+ * outright, so the job detail screen stays interactive without a backend.
  */
 export function useJob(id: string | undefined) {
   return useQuery({

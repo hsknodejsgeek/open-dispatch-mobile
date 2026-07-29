@@ -10,3 +10,7 @@ export const jobsKeys = {
     ['jobs', 'infinite', params] as const,
   detail: (id: string) => ['jobs', 'detail', id] as const,
 };
+
+export const userKeys = {
+  me: ['me'] as const,
+};
