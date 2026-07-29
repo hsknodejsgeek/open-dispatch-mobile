@@ -1,12 +1,13 @@
-import { QueryClientProvider } from '@tanstack/react-query';
+import { PersistQueryClientProvider } from '@tanstack/react-query-persist-client';
 import { DarkTheme, DefaultTheme, Stack, ThemeProvider, useRouter, useSegments } from 'expo-router';
 import * as SplashScreen from 'expo-splash-screen';
 import { useEffect, useState } from 'react';
 import { useColorScheme } from 'react-native';
 
 import { AnimatedSplashOverlay } from '@/components/animated-icon';
-import { getAccessToken } from '@/services/auth-storage';
-import { queryClient } from '@/services/query-client';
+import { onUnauthorized } from '@/services/api';
+import { queryClient, queryPersister } from '@/services/query-client';
+import { getAccessToken } from '@/services/storage';
 
 SplashScreen.preventAutoHideAsync();
 
@@ -42,6 +43,12 @@ function useAuthGate(): AuthStatus {
     }
   }, [status, segments, router]);
 
+  // If the API client's refresh flow fails (refresh token expired/invalid),
+  // treat it the same as never having been logged in.
+  useEffect(() => {
+    return onUnauthorized(() => setStatus('guest'));
+  }, []);
+
   return status;
 }
 
@@ -50,7 +57,7 @@ export default function RootLayout() {
   useAuthGate();
 
   return (
-    <QueryClientProvider client={queryClient}>
+    <PersistQueryClientProvider client={queryClient} persistOptions={{ persister: queryPersister }}>
       <ThemeProvider value={colorScheme === 'dark' ? DarkTheme : DefaultTheme}>
         <AnimatedSplashOverlay />
         <Stack screenOptions={{ headerShown: false }}>
@@ -62,6 +69,6 @@ export default function RootLayout() {
           />
         </Stack>
       </ThemeProvider>
-    </QueryClientProvider>
+    </PersistQueryClientProvider>
   );
 }
