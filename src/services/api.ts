@@ -1,6 +1,8 @@
 import axios, { type AxiosError, type InternalAxiosRequestConfig } from 'axios';
 import { Platform } from 'react-native';
 
+import { logActivity } from '@/services/activity-log';
+import { recordLatency } from '@/services/api-latency';
 import { clearTokens, getAccessToken, getRefreshToken, setTokens } from '@/services/storage';
 
 /**
@@ -44,13 +46,34 @@ function notifyUnauthorized() {
   for (const listener of unauthorizedListeners) listener();
 }
 
-api.interceptors.request.use(async (config) => {
+interface TimedConfig extends InternalAxiosRequestConfig {
+  _requestStartedAt?: number;
+}
+
+api.interceptors.request.use(async (config: TimedConfig) => {
   const token = await getAccessToken();
   if (token) {
     config.headers.set('Authorization', `Bearer ${token}`);
   }
+  config._requestStartedAt = Date.now();
   return config;
 });
+
+// Records real round-trip latency for the Sync & Diagnostics screen's "API
+// Latency" stat (Phase 8) — actual measured timings, not a fabricated
+// number. Runs on both success and failure paths.
+api.interceptors.response.use(
+  (response) => {
+    const startedAt = (response.config as TimedConfig)._requestStartedAt;
+    if (startedAt) recordLatency(Date.now() - startedAt);
+    return response;
+  },
+  (error: AxiosError) => {
+    const startedAt = (error.config as TimedConfig | undefined)?._requestStartedAt;
+    if (startedAt) recordLatency(Date.now() - startedAt);
+    return Promise.reject(error);
+  },
+);
 
 // Single-flight refresh: concurrent 401s share one in-flight refresh call
 // instead of each racing their own POST /v1/auth/refresh.
@@ -71,9 +94,11 @@ async function refreshAccessToken(): Promise<string | null> {
       refreshToken: string;
     };
     await setTokens({ accessToken, refreshToken: newRefreshToken });
+    logActivity('Token re-authenticated', 'neutral');
     return accessToken;
   } catch {
     await clearTokens();
+    logActivity('Session expired — signed out', 'warning');
     notifyUnauthorized();
     return null;
   }

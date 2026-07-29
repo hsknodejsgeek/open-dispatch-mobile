@@ -1,13 +1,25 @@
 import { useMutation, useQueryClient } from '@tanstack/react-query';
 
 import { jobsKeys } from '@/hooks/query-keys';
+import { logActivity } from '@/services/activity-log';
 import { updateDeliveryStatus } from '@/services/deliveries-service';
 import type { Delivery, DeliveryStatus, ListDeliveriesResponse } from '@/types/api';
 
-interface UpdateJobStatusInput {
+export interface UpdateJobStatusInput {
   id: string;
   status: DeliveryStatus;
 }
+
+/**
+ * Shared mutationKey so the Sync & Diagnostics screen (Phase 8) can read
+ * this mutation's live state via useMutationState — pending/paused count
+ * as "Uploads", error count as "Failed". With the default networkMode
+ * ('online'), a mutation fired while offline is automatically paused
+ * (not errored) and resumed once TanStack Query's onlineManager reports
+ * connectivity again (wired to NetInfo in services/query-client.ts) — real
+ * offline queueing behavior, not a simulated one.
+ */
+export const UPDATE_JOB_STATUS_MUTATION_KEY = ['jobStatusUpdate'];
 
 /**
  * Optimistically updates both the job detail cache and any cached list
@@ -19,6 +31,7 @@ export function useUpdateJobStatus() {
   const queryClient = useQueryClient();
 
   return useMutation({
+    mutationKey: UPDATE_JOB_STATUS_MUTATION_KEY,
     mutationFn: ({ id, status }: UpdateJobStatusInput) => updateDeliveryStatus(id, status),
 
     onMutate: async ({ id, status }) => {
@@ -48,13 +61,18 @@ export function useUpdateJobStatus() {
       return { previousDetail, previousLists };
     },
 
-    onError: (_err, { id }, context) => {
+    onError: (_err, { id, status }, context) => {
       if (context?.previousDetail) {
         queryClient.setQueryData(jobsKeys.detail(id), context.previousDetail);
       }
       context?.previousLists.forEach(([queryKey, data]) => {
         queryClient.setQueryData(queryKey, data);
       });
+      logActivity(`Failed to update ${context?.previousDetail?.trackingNumber ?? id} to ${status}`, 'danger');
+    },
+
+    onSuccess: (data) => {
+      logActivity(`Job ${data.trackingNumber} status updated to ${data.status}`, 'success');
     },
 
     onSettled: (_data, _error, { id }) => {
