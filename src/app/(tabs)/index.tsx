@@ -220,6 +220,7 @@ const styles = StyleSheet.create({
   },
   filterRow: {
     height: 40,
+    maxHeight: 40,
     marginBottom: Spacing.md,
   },
   filterListContent: {
@@ -295,7 +296,8 @@ const styles = StyleSheet.create({
   },
   listContent: {
     paddingHorizontal: Spacing.lg,
-    paddingBottom: Spacing['3xl'],
+    paddingBottom: Spacing['6xl'],
+    marginBottom: Spacing['6xl'],
   },
   centerFill: {
     flex: 1,
