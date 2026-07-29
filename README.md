@@ -1,56 +1,118 @@
-# Welcome to your Expo app 👋
+# Open Dispatch Mobile
 
-This is an [Expo](https://expo.dev) project created with [`create-expo-app`](https://www.npmjs.com/package/create-expo-app).
+The Driver / Field Agent companion app for Open Dispatch — an Expo Router (SDK 57) app for
+drivers to see their assigned deliveries, update job status in the field, and check their
+offline sync state. Built to pair with the Fastify backend in `../server`.
 
-## Get started
+## Architecture highlights
 
-1. Install dependencies
+- **Performance** — the assigned jobs feed (`(tabs)/index.tsx`) uses
+  [`@shopify/flash-list`](https://shopify.github.io/flash-list/) instead of `FlatList`, with
+  infinite-scroll pagination (`useInfiniteQuery`, 20 items/page) for smooth scrolling as the list
+  grows.
+- **Resilience** — offline-first caching via [`@tanstack/react-query`](https://tanstack.com/query)
+  persisted to disk with [`react-native-mmkv`](https://github.com/mrousavy/react-native-mmkv)
+  (`services/query-client.ts`). Cached data renders instantly on a cold start with no signal,
+  then revalidates once connectivity returns. Connectivity itself is real —
+  `@react-native-community/netinfo` is wired into TanStack Query's `onlineManager`, so a status
+  update fired while offline is genuinely queued (paused, not errored) and resumes automatically
+  when back online. The Sync & Diagnostics tab surfaces this queue, along with real API latency
+  and cache-size metrics, not placeholder numbers.
+- **Security** — JWT access/refresh tokens are isolated in `expo-secure-store` (iOS Keychain /
+  Android Keystore), never in MMKV or AsyncStorage (`services/storage.ts`). The API client sends
+  `X-Client-Type: mobile` and does a single-flight refresh-and-retry on 401
+  (`services/api.ts`).
+
+## Setup
+
+1. **Install dependencies**
 
    ```bash
    npm install
    ```
 
-2. Start the app
+2. **Start the backend** (see `../server/server/README.md`), then seed a demo driver login:
 
    ```bash
-   npx expo start
+   cd ../server/server
+   npm run migrate
+   npm run seed:mobile-driver
    ```
 
-In the output, you'll find options to open the app in a
+   This creates `driver@opendispatch.test` / `DriverPass123!` with a linked driver profile and a
+   few sample deliveries. Full details in `../server/docs/mobile UI/seed-credentials.md`. The
+   login screen pre-fills these credentials automatically in dev builds.
 
-- [development build](https://docs.expo.dev/develop/development-builds/introduction/)
-- [Android emulator](https://docs.expo.dev/workflow/android-studio-emulator/)
-- [iOS simulator](https://docs.expo.dev/workflow/ios-simulator/)
-- [Expo Go](https://expo.dev/go), a limited sandbox for trying out app development with Expo
+3. **Point the app at your backend** (optional): copy `.env.example` to `.env` and set
+   `EXPO_PUBLIC_API_URL` if you're not using the default `localhost:3001` / `10.0.2.2:3001`
+   (Android emulator) resolution — e.g. to test on a physical device, set it to your machine's
+   LAN IP.
 
-You can start developing by editing the files inside the **app** directory. This project uses [file-based routing](https://docs.expo.dev/router/introduction).
+4. **Run a dev client build** — this app uses `react-native-mmkv`, a native module, so it will
+   **not** run in plain Expo Go:
 
-## Get a fresh project
+   ```bash
+   npm run ios      # or
+   npm run android
+   ```
 
-When you're ready, run:
+   `react-native-mmkv` is pinned to 2.x rather than the newer 3.x because 3.x requires the New
+   Architecture (TurboModules), which this project's dev client isn't built with.
 
-```bash
-npm run reset-project
+## Project structure
+
+```
+src/
+├── app/
+│   ├── _layout.tsx           # Root: providers (query, gesture handler, bottom sheet),
+│   │                         # auth gate (SecureStore token check → (auth) vs (tabs))
+│   ├── (auth)/login.tsx      # Driver sign-in
+│   ├── (tabs)/
+│   │   ├── _layout.tsx       # Native bottom tab bar: Jobs / Sync / Profile
+│   │   ├── index.tsx         # Assigned Jobs — FlashList, filters, search
+│   │   ├── sync-status.tsx   # Sync & Diagnostics
+│   │   └── profile.tsx       # Driver profile, today's summary, logout
+│   └── job/[id].tsx          # Job detail + status action bottom sheet
+├── components/
+│   ├── job-card.tsx          # Assigned-jobs list item
+│   └── status-sheet.tsx      # Reusable confirm-and-act bottom sheet
+├── services/
+│   ├── api.ts                 # axios client, JWT bearer + refresh interceptor, latency tracking
+│   ├── auth-service.ts         # login/logout
+│   ├── deliveries-service.ts   # list/get/patch-status deliveries
+│   ├── user-service.ts         # GET /v1/auth/me
+│   ├── storage.ts              # SecureStore (tokens) + MMKV (cache) wrapper
+│   ├── query-client.ts         # TanStack QueryClient + MMKV persister + NetInfo online manager
+│   ├── api-latency.ts          # rolling API round-trip-time samples
+│   └── activity-log.ts         # MMKV-backed event log for the Sync screen's timeline
+├── hooks/                     # use-jobs, use-job, use-assigned-jobs (infinite), use-me,
+│                               # use-update-job-status (optimistic mutation)
+├── mocks/jobs.json            # Fallback data so the app works standalone without a backend
+├── constants/tokens.ts        # Design tokens (colors/spacing/typography) — plain StyleSheet,
+│                               # no NativeWind/Tailwind
+└── types/api.ts                # Shared types matching the server's typebox schemas
 ```
 
-This command will move the starter code to the **app-example** directory and create a blank **app** directory where you can start developing.
+## Known gaps vs. the design wireframes
 
-### Other setup steps
+The wireframes in `../mobile_wireframes` assume some data the backend doesn't have (customer
+name/phone, package weight/dimensions, distance, ETA, a driver photo/display name). Rather than
+fabricate that data, each screen shows only what's real and drops what isn't, with a comment at
+the top of the relevant file explaining the specific reconciliation. Also missing on purpose:
+biometric login, dark mode (no dark palette exists in `tokens.ts`), and location tracking (no
+location library integrated). See `docs/MOBILE_IMPLEMENTATION_PHASES.md` for the full phase-by-phase
+build log and every reconciliation decision.
 
-- To set up ESLint for linting, run `npx expo lint`, or follow our guide on ["Using ESLint and Prettier"](https://docs.expo.dev/guides/using-eslint/)
-- If you'd like to set up unit testing, follow our guide on ["Unit Testing with Jest"](https://docs.expo.dev/develop/unit-testing/)
-- Learn more about the TypeScript setup in this template in our guide on ["Using TypeScript"](https://docs.expo.dev/guides/typescript/)
+One cosmetic rough edge: the bottom tab bar reuses the template's two starter icons
+(`assets/images/tabIcons/{home,explore}.png`) across three tabs — Sync and Profile currently
+share the same icon. No icon library (e.g. Lucide, as `design.md` specifies) is installed yet;
+swapping in a proper icon set is a good next step.
 
-## Learn more
+## Scripts
 
-To learn more about developing your project with Expo, look at the following resources:
-
-- [Expo documentation](https://docs.expo.dev/): Learn fundamentals, or go into advanced topics with our [guides](https://docs.expo.dev/guides).
-- [Learn Expo tutorial](https://docs.expo.dev/tutorial/introduction/): Follow a step-by-step tutorial where you'll create a project that runs on Android, iOS, and the web.
-
-## Join the community
-
-Join our community of developers creating universal apps.
-
-- [Expo on GitHub](https://github.com/expo/expo): View our open source platform and contribute.
-- [Discord community](https://chat.expo.dev): Chat with Expo users and ask questions.
+- `npm run ios` / `npm run android` — build and run the dev client (also aliased as `build:ios`
+  / `build:android`)
+- `npm start` — start the Metro bundler
+- `npm run lint` — ESLint
+- `npm run reset-project` — Expo's built-in "start fresh" script (unrelated to this app's own
+  code, inherited from the create-expo-app template)
