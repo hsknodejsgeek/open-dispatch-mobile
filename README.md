@@ -2,7 +2,7 @@
 
 The Driver / Field Agent companion app for Open Dispatch — an Expo Router (SDK 57) app for
 drivers to see their assigned deliveries, update job status in the field, and check their
-offline sync state. Built to pair with the Fastify backend in `../server`.
+offline sync state.
 
 ## Architecture highlights
 
@@ -31,19 +31,7 @@ offline sync state. Built to pair with the Fastify backend in `../server`.
    npm install
    ```
 
-2. **Start the backend** (see `../server/server/README.md`), then seed a demo driver login:
-
-   ```bash
-   cd ../server/server
-   npm run migrate
-   npm run seed:mobile-driver
-   ```
-
-   This creates `driver@opendispatch.test` / `DriverPass123!` with a linked driver profile and a
-   few sample deliveries. Full details in `../server/docs/mobile UI/seed-credentials.md`. The
-   login screen pre-fills these credentials automatically in dev builds.
-
-3. **Point the app at your backend** (optional): copy `.env.example` to `.env` and set
+2. **Point the app at your backend** (optional): copy `.env.example` to `.env` and set
    `EXPO_PUBLIC_API_URL` if you're not using the default `localhost:3001` / `10.0.2.2:3001`
    (Android emulator) resolution — e.g. to test on a physical device, set it to your machine's
    LAN IP.
@@ -92,21 +80,6 @@ src/
 │                               # no NativeWind/Tailwind
 └── types/api.ts                # Shared types matching the server's typebox schemas
 ```
-
-## Known gaps vs. the design wireframes
-
-The wireframes in `../mobile_wireframes` assume some data the backend doesn't have (customer
-name/phone, package weight/dimensions, distance, ETA, a driver photo/display name). Rather than
-fabricate that data, each screen shows only what's real and drops what isn't, with a comment at
-the top of the relevant file explaining the specific reconciliation. Also missing on purpose:
-biometric login, dark mode (no dark palette exists in `tokens.ts`), and location tracking (no
-location library integrated). See `docs/MOBILE_IMPLEMENTATION_PHASES.md` for the full phase-by-phase
-build log and every reconciliation decision.
-
-One cosmetic rough edge: the bottom tab bar reuses the template's two starter icons
-(`assets/images/tabIcons/{home,explore}.png`) across three tabs — Sync and Profile currently
-share the same icon. No icon library (e.g. Lucide, as `design.md` specifies) is installed yet;
-swapping in a proper icon set is a good next step.
 
 ## Scripts
 
